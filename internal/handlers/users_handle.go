@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"users-api-memory/internal/models"
 	"users-api-memory/internal/response"
@@ -10,7 +12,17 @@ import (
 
 var users []models.User
 
-func AddUserHandle(w http.ResponseWriter, r *http.Request) {
+type UserHandler struct {
+	DB *sql.DB
+}
+
+func NewUserHandler(db *sql.DB) *UserHandler{
+	return &UserHandler{
+		DB: db,
+	}
+}
+
+func (h *UserHandler) AddUserHandle(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if r.Method != http.MethodPost {
 		response.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed!")
@@ -28,20 +40,35 @@ func AddUserHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Age <= 0 {
+	if user.Age < 0 {
 		response.WriteError(w, http.StatusBadRequest, "Age must be positive!")
 		return
 	}
+	
+	if user.Email == "" {
+		response.WriteError(w, http.StatusBadRequest, "Email is empty!")
+		return
+	}
+	
+	query := `
+	INSERT INTO users(name, age, email)
+	VALUES ($1, $2, $3)
+	RETURNING id, is_active, created_at
+	`
 
-	for _, userExist := range users {
-		if userExist.Name == user.Name {
-			response.WriteError(w, http.StatusConflict, "User already exist!")
-			return
-		}
+	err = h.DB.QueryRow(query, user.Name, user.Age, user.Email).Scan(
+		&user.ID,
+		&user.IsActive,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		log.Println("Failed to create user!",err)
+		response.WriteError(w, http.StatusInternalServerError, "Failed to create user!")
+		return
 	}
 
-	users = append(users, user)
 	response.WriteSuccess(w, http.StatusCreated, "User added successfully!", user)
+
 }
 
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {

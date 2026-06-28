@@ -1,13 +1,24 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"users-api-memory/internal/database"
 	"users-api-memory/internal/handlers"
 )
 
 func main() {
+	db, err := database.Connect()
+		if err != nil{
+			log.Fatal(err)
+		}
+	defer db.Close()
+	fmt.Println("Connected to database successfully!")
+	
+	userHandler := handlers.NewUserHandler(db)
 
-	http.HandleFunc("/addUser", handlers.AddUserHandle)
+	http.HandleFunc("/addUser", userHandler.AddUserHandle )
 	http.HandleFunc("/getUsers", handlers.GetUsersHandler)
 	http.HandleFunc("/getUser", handlers.GetUserHandler)
 	http.HandleFunc("/getCount", handlers.GetCountHandler)

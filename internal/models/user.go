@@ -1,15 +1,20 @@
 package models
 
+import (
+	"time"
+)
+
+
 type User struct {
+	ID int `json:"id"`
 	Name string `json:"name"`
 	Age  int    `json:"age"`
+	Email string `json:"email"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
 
-type SuccessResponse struct {
-	Message string `json:"message"`
-	User    User   `json:"user"`
-}
+
+
+
