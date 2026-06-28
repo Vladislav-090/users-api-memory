@@ -18,8 +18,10 @@ func main() {
 	
 	userHandler := handlers.NewUserHandler(db)
 
+
+
 	http.HandleFunc("/addUser", userHandler.AddUserHandle )
-	http.HandleFunc("/getUsers", handlers.GetUsersHandler)
+	http.HandleFunc("/getUsers", userHandler.GetUsersHandler)
 	http.HandleFunc("/getUser", handlers.GetUserHandler)
 	http.HandleFunc("/getCount", handlers.GetCountHandler)
 	http.HandleFunc("/deleteUser", handlers.DeleteUserHandler)

@@ -71,18 +71,44 @@ func (h *UserHandler) AddUserHandle(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler)GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		response.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed!")
 		return
 	}
-	jsonData, err := json.MarshalIndent(users, "", "  ")
+	
+	query := `
+	SELECT id, name, age, email, is_active, created_at
+	FROM users
+	ORDER BY id ASC`
+
+	rows, err := h.DB.Query(query)
 	if err != nil {
-		response.WriteError(w, http.StatusBadRequest, "Invalid JSON!")
+		response.WriteError(w, http.StatusInternalServerError, "Failed to get users!")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintln(w, string(jsonData))
+	defer rows.Close()
+
+	var users []models.User
+	
+	for rows.Next() {
+		var user models.User
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Age,
+			&user.Email,
+			&user.IsActive,
+			&user.CreatedAt,
+		)
+		if err != nil {
+			response.WriteError(w, http.StatusInternalServerError, "Failed to scan user!")
+			return
+		}
+		users = append(users, user)
+	}
+		response.WriteJSON(w, http.StatusOK, users)
 }
 
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
