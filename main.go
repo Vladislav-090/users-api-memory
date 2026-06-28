@@ -23,7 +23,7 @@ func main() {
 	http.HandleFunc("/addUser", userHandler.AddUserHandle )
 	http.HandleFunc("/getUsers", userHandler.GetUsersHandler)
 	http.HandleFunc("/getUser", userHandler.GetUserHandler)
-	http.HandleFunc("/getCount", handlers.GetCountHandler)
+	http.HandleFunc("/getCount", userHandler.GetCountHandler)
 	http.HandleFunc("/deleteUser", userHandler.DeleteUserHandler)
 	http.HandleFunc("/clearUsers", handlers.ClearUsersHandler)
 

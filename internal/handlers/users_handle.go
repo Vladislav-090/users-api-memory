@@ -186,12 +186,27 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-func GetCountHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetCountHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		response.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed!")
 		return
 	}
-	fmt.Fprintln(w, "Count of users:", len(users))
+
+	var count int
+
+	query := `
+	SELECT COUNT(*) AS count_of_users
+	FROM users`
+
+	err := h.DB.QueryRow(query).Scan(&count)
+	if err != nil {
+		response.WriteError(w, http.StatusInternalServerError, "Faild to get count of users!")
+		return
+	}
+
+	response.WriteJSON(w, http.StatusOK, map[string]int{
+		"count_of_users:" : count,
+	})
 }
 
 func ClearUsersHandler(w http.ResponseWriter, r *http.Request) {
