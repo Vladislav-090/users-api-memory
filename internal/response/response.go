@@ -11,10 +11,9 @@ type ErrorResponse struct {
 }
 
 type SuccessResponse struct {
-	Message string `json:"message"`
-	User    models.User   `json:"user"`
+	Message string      `json:"message"`
+	User    models.User `json:"user"`
 }
-
 
 func WriteJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")

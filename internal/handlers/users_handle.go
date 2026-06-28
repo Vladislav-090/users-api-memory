@@ -13,7 +13,7 @@ type UserHandler struct {
 	DB *sql.DB
 }
 
-func NewUserHandler(db *sql.DB) *UserHandler{
+func NewUserHandler(db *sql.DB) *UserHandler {
 	return &UserHandler{
 		DB: db,
 	}
@@ -41,12 +41,12 @@ func (h *UserHandler) AddUserHandle(w http.ResponseWriter, r *http.Request) {
 		response.WriteError(w, http.StatusBadRequest, "Age must be positive!")
 		return
 	}
-	
+
 	if user.Email == "" {
 		response.WriteError(w, http.StatusBadRequest, "Email is empty!")
 		return
 	}
-	
+
 	query := `
 	INSERT INTO users(name, age, email)
 	VALUES ($1, $2, $3)
@@ -59,7 +59,7 @@ func (h *UserHandler) AddUserHandle(w http.ResponseWriter, r *http.Request) {
 		&user.CreatedAt,
 	)
 	if err != nil {
-		log.Println("Failed to create user!",err)
+		log.Println("Failed to create user!", err)
 		response.WriteError(w, http.StatusInternalServerError, "Failed to create user!")
 		return
 	}
@@ -68,12 +68,12 @@ func (h *UserHandler) AddUserHandle(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *UserHandler)GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		response.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed!")
 		return
 	}
-	
+
 	query := `
 	SELECT id, name, age, email, is_active, created_at
 	FROM users
@@ -87,7 +87,7 @@ func (h *UserHandler)GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	users := make([]models.User, 0)
-	
+
 	for rows.Next() {
 		var user models.User
 
@@ -105,10 +105,15 @@ func (h *UserHandler)GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		users = append(users, user)
 	}
-		response.WriteJSON(w, http.StatusOK, users)
+	err = rows.Err()
+	if err != nil {
+		response.WriteError(w, http.StatusInternalServerError, "Rows error!")
+		return
+	}
+	response.WriteJSON(w, http.StatusOK, users)
 }
 
-func (h *UserHandler)GetUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		response.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed!")
@@ -118,18 +123,18 @@ func (h *UserHandler)GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
 	name := r.URL.Query().Get("name")
-	if name == ""{
+	if name == "" {
 		response.WriteError(w, http.StatusBadRequest, "Name is empty!")
 		return
 	}
 
-	query:= `
+	query := `
 	SELECT  id, name, age, email, is_active, created_at
 	FROM users
 	WHERE name = $1
 	`
 
-	err := h.DB.QueryRow(query,name).Scan(
+	err := h.DB.QueryRow(query, name).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Age,
@@ -161,7 +166,7 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	DELETE FROM users
 	WHERE name = $1
 	`
-	result, err := h.DB.Exec(query,name)
+	result, err := h.DB.Exec(query, name)
 	if err != nil {
 		response.WriteError(w, http.StatusInternalServerError, "Failed to delete user!")
 		return
@@ -178,8 +183,8 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.WriteJSON(w, http.StatusOK, map[string]string{
-		"message" : "User deleted successfully",
-		"name" : name,
+		"message": "User deleted successfully",
+		"name":    name,
 	})
 }
 
@@ -202,7 +207,7 @@ func (h *UserHandler) GetCountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJSON(w, http.StatusOK, map[string]int{
-		"count_of_users:" : count,
+		"count_of_users:": count,
 	})
 }
 
@@ -216,20 +221,20 @@ func (h *UserHandler) ClearUsersHandler(w http.ResponseWriter, r *http.Request) 
 	DELETE FROM users
 	`
 	result, err := h.DB.Exec(query)
-		if err != nil {
-			response.WriteError(w, http.StatusInternalServerError, "Failed to delete all users")
-			return
-		} 
-	
+	if err != nil {
+		response.WriteError(w, http.StatusInternalServerError, "Failed to delete all users")
+		return
+	}
+
 	rawAffected, err := result.RowsAffected()
 	if err != nil {
 		response.WriteError(w, http.StatusInternalServerError, "Failed to check deleted rows!")
 		return
 	}
 
-	response.WriteJSON(w , http.StatusOK, map[string]interface{}{
-		"message:" : "All users deleted successfully!",
-		"deleted_count:" : rawAffected,
-	} )
+	response.WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"message:":       "All users deleted successfully!",
+		"deleted_count:": rawAffected,
+	})
 
 }
