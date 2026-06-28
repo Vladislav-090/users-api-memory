@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"users-api-memory/internal/models"
 	"users-api-memory/internal/response"
 )
@@ -237,4 +238,68 @@ func (h *UserHandler) ClearUsersHandler(w http.ResponseWriter, r *http.Request) 
 		"deleted_count:": rawAffected,
 	})
 
+}
+
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		response.WriteError(w, http.StatusMethodNotAllowed, "method not allowed!")
+		return
+	}
+
+	idParam := r.URL.Query().Get("id")
+	if idParam == "" {
+		response.WriteError(w, http.StatusBadRequest, "Id is empty")
+		return
+	}
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		response.WriteError(w, http.StatusBadRequest, "Invalid ID!")
+		return
+	}
+
+	var user models.User
+
+	err = json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		response.WriteError(w, http.StatusBadRequest, "Invalid JSON!")
+		return
+	}
+
+	if user.Name == "" {
+		response.WriteError(w, http.StatusBadRequest, "Name is empty!")
+		return
+	}
+
+	if user.Age < 0 {
+		response.WriteError(w, http.StatusBadRequest, "Age must be positive!")
+		return
+	}
+
+	if user.Email == "" {
+		response.WriteError(w, http.StatusBadRequest, "Email is empty!")
+		return
+	}
+
+	query := `
+	UPDATE users
+	SET name = $1, age = $2, email = $3
+	WHERE id = $4
+	RETURNING id, name, age, email, is_active, created_at
+	`
+
+	err = h.DB.QueryRow(query, user.Name, user.Age, user.Email, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Age,
+		&user.Email,
+		&user.IsActive,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		response.WriteError(w, http.StatusNotFound, "User not found!")
+		return
+	}
+
+	response.WriteSuccess(w, http.StatusOK, "User updated successfully!", user)
 }
