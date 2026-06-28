@@ -147,7 +147,7 @@ func (h *UserHandler)GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusOK, user)
 }
 
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodDelete {
 		response.WriteError(w, http.StatusMethodNotAllowed, "Method not allowed!")
@@ -159,15 +159,31 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		response.WriteError(w, http.StatusBadRequest, "Name is empty!")
 		return
 	}
-	for i, user := range users {
-		if user.Name == name {
-			users = append(users[:i], users[i+1:]...)
-			fmt.Fprintln(w, "Student deleted!")
-			return
-		}
+
+	query := `
+	DELETE FROM users
+	WHERE name = $1
+	`
+	result, err := h.DB.Exec(query,name)
+	if err != nil {
+		response.WriteError(w, http.StatusInternalServerError, "Failed to delete user!")
+		return
 	}
-	response.WriteError(w, http.StatusBadRequest, "User not found!")
-	return
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		response.WriteError(w, http.StatusInternalServerError, "")
+		return
+	}
+	if rowsAffected == 0 {
+		response.WriteError(w, http.StatusNotFound, "User not found!")
+		return
+	}
+
+	response.WriteJSON(w, http.StatusOK, map[string]string{
+		"message" : "User deleted successfully",
+		"name" : name,
+	})
 }
 
 func GetCountHandler(w http.ResponseWriter, r *http.Request) {
