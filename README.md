@@ -1,147 +1,221 @@
-# Users API (In-Memory)
+# Users API with PostgreSQL
 
-A simple REST API written in Go for managing users in memory.
+A simple REST API written in Go for managing users with PostgreSQL as a database.
 
-This project was created as part of my Golang learning journey to practice HTTP handlers, JSON processing, validation, routing, and project structure.
-
-## Features
-
-* Add user
-* Get all users
-* Get user by name
-* Delete user
-* Clear all users
-* Count users
-* JSON success responses
-* JSON error responses
-* HTTP status codes
-* Duplicate user validation
-
-## Technologies
+## Tech Stack
 
 * Go
 * net/http
-* encoding/json
+* PostgreSQL
+* database/sql
+* lib/pq
+* godotenv
+* Git / GitHub
+
+## Features
+
+* Create user
+* Get all users
+* Get user by ID
+* Update user by ID
+* Delete user by ID
+* Get users count
+* Delete all users
+* PostgreSQL storage
+* Environment variables for database configuration
+* JSON responses
 
 ## Project Structure
 
 ```text
-users-api-memory/
-│
-├── go.mod
+users-api-postgres
+├── internal
+│   ├── database
+│   │   └── database.go
+│   ├── handlers
+│   │   └── users_handler.go
+│   ├── models
+│   │   └── user.go
+│   └── response
+│       └── response.go
 ├── main.go
-├── README.md
-│
-└── internal
-    ├── handlers
-    │   └── users_handler.go
-    │
-    ├── models
-    │   └── user.go
-    │
-    └── response
-        └── response.go
+├── go.mod
+├── go.sum
+├── .gitignore
+├── .env.example
+├── solution.sql
+└── README.md
+```
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=users_api
+DB_SSLMODE=disable
+```
+
+The real `.env` file should not be committed to GitHub.
+
+Example file for GitHub:
+
+```text
+.env.example
+```
+
+## Database Table
+
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age INTEGER CHECK (age >= 0),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ## API Endpoints
 
-### Add User
+### Create user
 
 ```http
 POST /addUser
 ```
 
-Request:
+Example request:
 
-```json
-{
-  "name": "Max",
-  "age": 10
-}
+```powershell
+Invoke-RestMethod -Method POST http://localhost:8080/addUser `
+  -ContentType "application/json" `
+  -Body '{"name":"Max","age":29,"email":"max@example.com"}'
 ```
 
-Success Response
-
-```json
-{
-  "message": "User added successfully!",
-  "user": {
-    "name": "Max",
-    "age": 10
-  }
-}
-```
-
----
-
-### Get All Users
+### Get all users
 
 ```http
 GET /getUsers
 ```
 
----
+Example request:
 
-### Get User
-
-```http
-GET /getUser?name=Max
+```powershell
+Invoke-RestMethod -Method GET http://localhost:8080/getUsers
 ```
 
----
-
-### Delete User
+### Get user by ID
 
 ```http
-DELETE /deleteUser?name=Max
+GET /getUser?id=1
 ```
 
----
+Example request:
 
-### Clear Users
+```powershell
+Invoke-RestMethod -Method GET "http://localhost:8080/getUser?id=1"
+```
+
+### Update user by ID
 
 ```http
-DELETE /clearUsers
+PUT /updateUser?id=1
 ```
 
----
+Example request:
 
-### Count Users
+```powershell
+Invoke-RestMethod -Method PUT "http://localhost:8080/updateUser?id=1" `
+  -ContentType "application/json" `
+  -Body '{"name":"Max Updated","age":30,"email":"max.updated@example.com"}'
+```
+
+### Delete user by ID
+
+```http
+DELETE /deleteUser?id=1
+```
+
+Example request:
+
+```powershell
+Invoke-RestMethod -Method DELETE "http://localhost:8080/deleteUser?id=1"
+```
+
+### Get users count
 
 ```http
 GET /getCount
 ```
 
-## Validation
+Example request:
 
-The API validates:
-
-* HTTP method
-* JSON body
-* Empty name
-* Positive age
-* Duplicate users
-
-## Error Response
-
-```json
-{
-  "error": "User already exist!"
-}
+```powershell
+Invoke-RestMethod -Method GET http://localhost:8080/getCount
 ```
 
-## Run
+### Delete all users
 
-```bash
+```http
+DELETE /clearUsers
+```
+
+Example request:
+
+```powershell
+Invoke-RestMethod -Method DELETE http://localhost:8080/clearUsers
+```
+
+## How to Run
+
+Clone the repository:
+
+```powershell
+git clone https://github.com/Vladislav-090/users-api-postgres.git
+```
+
+Go to the project folder:
+
+```powershell
+cd users-api-postgres
+```
+
+Install dependencies:
+
+```powershell
+go mod tidy
+```
+
+Create `.env` file and configure database connection.
+
+Run the application:
+
+```powershell
 go run .
 ```
 
-## Future Improvements
+Server will start on:
 
-* PostgreSQL
-* Docker
-* Environment variables
-* Logging
-* Middleware
-* Unit tests
-* Authentication
+```text
+http://localhost:8080
+```
+
+## Status
+
+This project is a learning backend API built step by step while practicing:
+
+* HTTP handlers
+* JSON decoding and encoding
+* PostgreSQL queries
+* INSERT RETURNING
+* SELECT
+* UPDATE RETURNING
+* DELETE
+* COUNT
+* environment variables
+* Git workflow
