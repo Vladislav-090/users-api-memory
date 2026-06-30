@@ -123,19 +123,24 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		response.WriteError(w, http.StatusBadRequest, "Name is empty!")
+	idString := r.URL.Query().Get("id")
+	if idString == "" {
+		response.WriteError(w, http.StatusBadRequest, "ID is empty!")
+		return
+	}
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		response.WriteError(w, http.StatusBadRequest, "Invalid ID!")
 		return
 	}
 
 	query := `
 	SELECT  id, name, age, email, is_active, created_at
 	FROM users
-	WHERE name = $1
+	WHERE id = $1
 	`
 
-	err := h.DB.QueryRow(query, name).Scan(
+	err = h.DB.QueryRow(query, id).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Age,
@@ -157,17 +162,23 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		response.WriteError(w, http.StatusBadRequest, "Name is empty!")
+	idString := r.URL.Query().Get("id")
+	if idString == "" {
+		response.WriteError(w, http.StatusBadRequest, "Id is empty!")
+		return
+	}
+
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		response.WriteError(w, http.StatusBadRequest, "Invalid ID!")
 		return
 	}
 
 	query := `
 	DELETE FROM users
-	WHERE name = $1
+	WHERE id = $1
 	`
-	result, err := h.DB.Exec(query, name)
+	result, err := h.DB.Exec(query, id)
 	if err != nil {
 		response.WriteError(w, http.StatusInternalServerError, "Failed to delete user!")
 		return
@@ -183,9 +194,9 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	response.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "User deleted successfully",
-		"name":    name,
+		"name":    id,
 	})
 }
 
@@ -203,12 +214,12 @@ func (h *UserHandler) GetCountHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := h.DB.QueryRow(query).Scan(&count)
 	if err != nil {
-		response.WriteError(w, http.StatusInternalServerError, "Faild to get count of users!")
+		response.WriteError(w, http.StatusInternalServerError, "Failed to get count of users!")
 		return
 	}
 
 	response.WriteJSON(w, http.StatusOK, map[string]int{
-		"count_of_users:": count,
+		"count_of_users": count,
 	})
 }
 
